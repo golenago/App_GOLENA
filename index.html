@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>La Golena di Casalmaggiore</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family: 'Inter', sans-serif;
+      background:#f2f2f7;
+      display:flex;
+      justify-content:center;
+      padding: clamp(10px, 3vw, 24px);
+      color:#111;
+      min-height: 100vh;
+    }
+
+    .phone{
+      width: min(100%, 760px);
+      max-width: 760px;
+      min-width: 320px;
+      min-height:100vh;
+      background:#f2f2f7;
+      position: relative;
+    }
+
+    .title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+
+    .title{
+      font-size: clamp(28px, 5vw, 38px);
+      font-weight:600;
+      line-height:1.05;
+      margin: 0;
+      padding: 0;
+    }
+
+    .title-row .title {
+      display: inline-flex;
+      white-space: nowrap;
+    }
+
+    /* Card generica */
+    .card{
+      background:#ffffff;
+      border-radius:24px;
+      padding:14px;
+      margin-bottom:14px;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.04),
+        0 0 1px rgba(0,0,0,0.06);
+    }
+
+    /* Card singole per hero superiore / inferiore */
+    .card1{
+      background:#ffffff;
+      border-radius:24px;
+      margin-bottom:14px;
+      overflow:hidden;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.04),
+        0 0 1px rgba(0,0,0,0.06);
+    }
+
+    .hero1{
+      height:220px;
+      position:relative;
+      overflow:hidden;
+      border-top-left-radius:24px;
+      border-top-right-radius:24px;
+      background-color: #ddd;
+    }
+
+    .hero1 img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .hero2{
+      background:#ffffff;
+      border-bottom-left-radius:24px;
+      border-bottom-right-radius:24px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.04),
+        0 0 1px rgba(0,0,0,0.06);
+    }
+
+    .hero2 p {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    /* Stili per i dati del percorso */
+    .path-info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #f2f2f7;
+    }
+
+    .info-block {
+      flex: 1 1 120px;
+      min-width: 100px;
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .info-block:not(:last-child) {
+      border-right: 1px solid #f2f2f7;
+    }
+
+    .info-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #8e8e93;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .info-data {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    /* Struttura Mappa */
+    .mapCard{
+      border-radius:24px;
+      margin-bottom:14px;
+      overflow:hidden;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.04),
+        0 0 1px rgba(0,0,0,0.06);
+      min-height:260px;
+      height: min(36vh, 340px);
+      background:#ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .map-card{
+      position:relative;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#e7e7ea;
+      border-radius:24px;
+      overflow:hidden;
+    }
+
+    #map{
+      position:absolute;
+      inset:0;
+      height:100%;
+      width:100%;
+      z-index:1;
+    }
+
+    /* Stile personalizzato per i numeri dentro i segnaposti della mappa */
+    .custom-marker-icon {
+      background: #007aff;
+      color: white;
+      border: 2px solid white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 11px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 999 !important;
+    }
+
+    /* Bottone Mappa */
+    .expand-btn{
+      position:absolute;
+      top:12px;
+      right:12px;
+      width:38px;
+      height:38px;
+      border-radius:50%;
+      background:rgba(255, 255, 255, 0.9);
+      border:none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor:pointer;
+      box-shadow:0 4px 10px rgba(0,0,0,0.15);
+      z-index:10;
+      transition:0.2s;
+    }
+
+    .expand-btn:hover{
+      transform:scale(1.05);
+      background:#ffffff;
+    }
+
+    /* Bottoni e riga */
+    .row{
+      display:flex;
+      flex-wrap: wrap;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .small-card{
+      flex:1 1 150px;
+      min-width: 140px;
+      height:90px;
+      background:#ffffff;
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-weight:600;
+      cursor:pointer;
+      transition:0.2s;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.04),
+        0 0 1px rgba(0,0,0,0.06);
+    }
+
+    .small-card:hover{
+      transform:translateY(-2px);
+    }
+
+    /* CAROSELLO */
+    .carousel-card {
+      background: #ffffff;
+      border-radius: 24px;
+      margin-bottom: 14px;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.04),
+        0 0 1px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .carousel-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 180px;
+      height: min(28vh, 240px);
+      overflow: hidden;
+    }
+
+    .partners-card {
+      background: #ffffff;
+    }
+
+    .partners-card .info-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+
+    .photo-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .photo-item {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+    }
+
+    .photo-item a {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .photo-item + .photo-item {
+      border-left: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .photo-item img {
+      max-width: 100%;
+      height: 75px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .partners-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #505050;
+      line-height: 1.5;
+    }
+
+    .carousel-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .carousel-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+    }
+
+    .carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0;
+      cursor: pointer;
+      user-select: none;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: 0.2s;
+    }
+
+    .arrow i {
+      font-size: 12px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .arrow:hover {
+      background: #ffffff;
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .arrow.left { left: 12px; }
+    .arrow.right { right: 12px; }
+
+    .dots-container {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 0;
+      z-index: 10;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #d1d1d6;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .dot.active {
+      background: #ffffff;
+      width: 18px;
+      border-radius: 4px;
+    }
+
+    /* Effetto sfocatura iOS */
+    .glass{
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Stile personalizzato per i popup di Leaflet */
+    .leaflet-popup-content {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.4;
+      font-size: 13px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .leaflet-popup-content b {
+      font-size: 14px;
+      color: #007aff;
+    }
+
+    /* MEDIA QUERIES - RESPONSIVE DESIGN */
+    
+    /* Piccoli dispositivi (mobile, 320px - 480px) */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+        padding-bottom: 0px;
+      }
+
+      .title {
+        font-size: 26px;
+      }
+
+      .card, .card1, .carousel-card {
+        margin-bottom: 12px;
+        border-radius: 16px;
+      }
+
+      .hero1, .carousel-wrapper {
+        min-height: 150px;
+        height: 200px;
+      }
+
+      .hero2 p {
+        font-size: 13px;
+      }
+
+      .path-info {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding-top: 10px;
+      }
+
+      .info-block {
+        border-right: none;
+        padding: 10px 4px;
+      }
+
+      .info-label {
+        font-size: 10px;
+      }
+
+      .info-data {
+        font-size: 13px;
+      }
+
+      .row {
+        flex-direction: column;
+      }
+
+      .arrow {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+      }
+
+      .expand-btn {
+        width: 34px;
+        height: 34px;
+      }
+    }
+
+    /* Dispositivi medi (tablet, 481px - 768px) */
+    @media (min-width: 481px) and (max-width: 768px) {
+      .phone {
+        max-width: 500px;
+      }
+
+      .title {
+        font-size: 32px;
+        margin-bottom: 18px;
+      }
+
+      .card, .card1, .carousel-card {
+        border-radius: 20px;
+      }
+
+      .hero1, .carousel-wrapper {
+        height: 200px;
+      }
+
+      .info-data {
+        font-size: 14px;
+      }
+    }
+
+    /* Dispositivi grandi (tablet grande, desktop, 769px+) */
+    @media (min-width: 769px) {
+      .phone {
+        max-width: 600px;
+      }
+
+      .title {
+        font-size: 38px;
+      }
+
+      .hero1, .carousel-wrapper {
+        height: 240px;
+      }
+    }
+
+    /* Ottimizzazioni per schermi molto grandi (1200px+) */
+    @media (min-width: 1200px) {
+      body {
+        padding: 24px;
+      }
+
+      .phone {
+        max-width: 600px;
+      }
+    }
+
+    /* Ottimizzazioni orientamento landscape */
+    @media (max-height: 600px) and (orientation: landscape) {
+      .hero1, .carousel-wrapper, .mapCard {
+        height: 150px;
+      }
+
+      .title {
+        margin-bottom: 8px;
+      }
+
+      .card, .card1, .carousel-card {
+        margin-bottom: 8px;
+      }
+    }
+
+    /* Two wide buttons aligned left and right */
+    .icon-row {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .icon-btn {
+      width: 48%;
+      height: 48px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: #ffffff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      cursor: pointer;
+      color: #111;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      gap: 10px;
+    }
+
+    .icon-btn i {
+      line-height: 1;
+      pointer-events: none;
+      font-size: 18px;
+    }
+
+    .icon-btn span {
+      font-size: 12px;
+      font-weight: 200;
+      text-align: center;
+    }
+
+    .icon-btn:active { transform: translateY(1px); }
+
+    /* Align icons inside each button: first to left, second to right */
+    .icon-row .icon-btn:first-child { justify-content: center; padding-left: 14px; }
+    .icon-row .icon-btn:last-child { justify-content: center; padding-right: 14px; }
+
+.leaflet-touch .leaflet-bar a {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 20px;
+    font-weight: 100;
+    text-align: center;
+}
+
+.leaflet-touch .leaflet-bar a:first-child {
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+}
+
+.leaflet-touch .leaflet-bar a:last-child {
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.leaflet-touch .leaflet-control-layers, .leaflet-touch .leaflet-bar {
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    background-clip: padding-box;
+    border-radius: 24px;
+}
+  </style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="title-row">
+      <div class="title" style="font-weight: 600;">Go</div>
+      <div class="title" style="font-weight: 300;">lena</div>
+      <div class="title" style="font-weight: 600;">Go</div>
+    </div>
+
+      <div class="hero1">
+        <img src="img/010.jpg" alt="Copertina" onerror="this.src='https://picsum.photos/id/1015/390/220'">
+      </div>
+    
+    <div class="hero2">
+        <p>Esplora l'area naturalistica della Golena del Po a Casalmaggiore. Un'oasi di biodiversità perfetta per passeggiate, birdwatching e cicloturismo immersi nella natura fluviale.</p>
+        
+        <div class="path-info">
+          <div class="info-block">
+            <div class="info-label">Durata</div>
+            <div class="info-data">60 min</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Lunghezza</div>
+            <div class="info-data">2,75 km</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Livello</div>
+            <div class="info-data" style="color: #34c759;">Facile</div>
+          </div>
+        </div>
+    </div>
+    
+    <div class="mapCard" id="mapContainer">
+      <div class="map-card">
+        <div id="map"></div>
+        <button class="expand-btn" id="fullscreenBtn" title="Vai alla mappa">
+          <i class="bi bi-map"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="row icon-row" aria-label="Azioni">
+      <button id="scannerBtn" class="icon-btn glass" title="Scansiona QR" aria-label="Scansiona QR">
+        <i class="bi bi-qr-code-scan"></i>        
+        <span>Scansiona</span>
+      </button>
+
+      <button id="feedbackBtn" class="icon-btn glass" title="Feedback" aria-label="Feedback">
+        <i class="bi bi-chat-dots"></i>
+        <span>Segnala</span>
+      </button>
+    </div>
+
+    
+
+    <div class="carousel-card">
+      <div class="carousel-wrapper">
+        <div class="arrow left" id="prevBtn">
+          <i class="bi bi-chevron-left"></i>
+        </div>
+        <div class="arrow right" id="nextBtn">
+          <i class="bi bi-chevron-right"></i>
+        </div>
+
+        <div class="carousel-track" id="carouselTrack">
+          <div class="carousel-slide"><img src="img/020.jpg" alt="Foto 1"></div>
+          <div class="carousel-slide"><img src="img/021.jpg" alt="Foto 2"></div>
+          <div class="carousel-slide"><img src="img/022.jpg" alt="Foto 3"></div>
+          <div class="carousel-slide"><img src="img/023.jpg" alt="Foto 4"></div>
+          <div class="carousel-slide"><img src="img/024.jpg" alt="Foto 5"></div>
+          <div class="carousel-slide"><img src="img/025.jpg" alt="Foto 6"></div>
+          <div class="carousel-slide"><img src="img/026.jpg" alt="Foto 7"></div>
+          <div class="carousel-slide"><img src="img/027.jpg" alt="Foto 8"></div>
+          <div class="carousel-slide"><img src="img/028.jpg" alt="Foto 9"></div>
+          <div class="carousel-slide"><img src="img/029.jpg" alt="Foto 10"></div>
+        </div>
+      </div>
+
+      <div class="dots-container" id="dotsContainer">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <div class="card partners-card" style="margin-bottom: 0px; border-radius: 24px 24px 0 0;">
+      <p class="info-label" style="    text-align: center;">da un'idea di:</p>
+      <div class="photo-grid" aria-label="Logo partner principale">
+        <div class="photo-item">
+          <a href="https://poloromani.edu.it/" target="_blank" rel="noopener noreferrer" title="Vai al sito partner principale">
+            <img src="img/logo_romani.jpeg" alt="Logo partner principale" style="height: 55px;">
+          </a>
+        </div>
+      </div>
+      <p class="info-label" style="margin-top: 10px; text-align: center;">in collaborazione con:</p>
+      <div class="photo-grid" aria-label="Loghi partner">
+        <div class="photo-item">
+          <a href="https://www.legambiente.it/?_gl=1*1ih58q7*_up*MQ..*_gs*MQ..*_gcl_aw*R0NMLjE3Nzk2NTA2MTguQ2owS0NRand3OHJRQmhEakFSSXNBRTQzS1BPNS1UR0dmdzAyYXBHdkFVUjBTOHRyWU51cFhKNzdabktLZUViVnBNRE4yZDJ5VmxJWi15a2FBbi1ERUFMd193Y0I.*_gcl_au*MTUyNjEyNDY0NS4xNzc5NjM4MTQ3*_ga*MTIxMjY4NDM1OS4xNzc5NjM4MTM0*_ga_LX7CNT6SDN*czE3Nzk2NTA1OTYkbzIkZzEkdDE3Nzk2NTA2MjAkajM2JGwwJGgw&gclid=Cj0KCQjww8rQBhDjARIsAE43KPO5-TGGfw02apGvAUR0S8trYNupXJ77ZnKKeEbVpMDN2d2yVlIZ-ykaAn-DEALw_wcB&gbraid=0AAAAABOf-8cSr2bb43WsZRXOgcshWzQyx" target="_blank" rel="noopener noreferrer" title="Vai al sito partner 1">
+            <img src="img/logo_legambiente.jpeg" alt="Logo partner 1">
+          </a>
+        </div>
+        <div class="photo-item">
+          <a href="https://www.camminodelpo.it/" target="_blank" rel="noopener noreferrer" title="Vai al sito partner 2">
+            <img src="img/logo_camminodelpo.jpeg" alt="Logo partner 2">
+          </a>
+        </div>
+        <div class="photo-item">
+          <a href="https://www.persona-ambiente.it/" target="_blank" rel="noopener noreferrer" title="Vai al sito partner 3">
+            <img src="img/logo_personaambiente.jpeg" alt="Logo partner 3">
+          </a>
+        </div>
+        <div class="photo-item">
+          <a href="http://www.interflumina.it/" target="_blank" rel="noopener noreferrer" title="Vai al sito partner 4">
+            <img src="img/logo_interflumina.jpeg" alt="Logo partner 4">
+          </a>
+        </div>
+      </div>
+      <p class="partners-note" style="font-size: 10px; text-align: center"><i>Audio e testi: 1° - 2° Liceo Classico</i></p>
+      <p class="partners-note" style="margin: 0px; font-size: 10px; text-align: center;"><i>A CREATION BY: © Lorenzo e Jacopo Goffredi - 06.2026</i></p>
+    </div>
+    
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+
+  <script>
+    // Mappa
+    const map = L.map('map', { center: [44.9925, 10.4060], zoom: 15, scrollWheelZoom: false });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // Caricamento del file traccia golena_2.gpx
+    const gpxFile = 'golena_2.gpx'; 
+    new L.GPX(gpxFile, {
+      async: true,
+      marker_options: {
+        startIconUrl: null, 
+        endIconUrl: null,
+        shadowUrl: null
+      },
+      polyline_options: {
+        color: '#007aff',   
+        opacity: 0.75,
+        weight: 5,
+        lineCap: 'round'
+      }
+    }).on('loaded', function(e) {
+      map.fitBounds(e.target.getBounds());
+    }).addTo(map);
+
+    // Array delle 18 tappe fornite
+    const tappe = [
+      {id:1, title:"Introduzione", lat:44.99522, lng:10.40701, desc:"Gentili visitatori che avete scelto di addentrarvi in questo percorso naturalistico, lasciatevi guidare nel suggestivo space della golena del Po, dove le lento scorrere del grande fiume si unisce alla quiete della natura incontaminata. Attraversando sentieri ombreggiati, potrete immergervi in un paesaggio ricco di fascino, popolato da numerose specie di uccelli e caratterizzato dai colori mutevoli delle stagioni. Questo itinerario vi offrirà non soltanto l'occasione di conoscere più da vicino l'ambiente fluviale, ma anche di riscoprire un rapporto autentico con la natura, in un luogo in cui storia, equilibrio idraulico e biodiversità convivono armoniosamente."},
+      {id:2, title:"Argine Maestro", lat:44.99496, lng:10.40724, desc:"Vi trovate ora sull'argine maestro del fiume. Quest'opera di fondamentale importanza è stata realizzata lungo le rive allo scopo di contenere le acque durante i periodi di piena e di prevenire le esondazioni. L'argine maestro costituisce una barriera artificiale che protegge i centri abitati, le campagne e le vie di comunicazione dai danni provocati dall'impetuosità del corso d'acqua. Oltre alla funzione di difesa, l'argine maestro svolge anche un ruolo di regolazione del flusso fluviale, contribuendo a mantenere più stabile il percorso del fiume e a limitare i fenomeni di erosione delle sponde. Fin dall'antichità, civiltà come quella romana attribuirono grande importanza alla costruzione degli argini, riconoscendo nel controllo delle acque una conditione essenziale per la sicurezza del territorio e per lo sviluppo dell'agricoltura e dei commerci."},
+      {id:3, title:"Arginello Comprensoriale", lat:44.99439, lng:10.40688, desc:"Vi invitiamo ora a percorrere per un breve tratto l'arginello comprensoriale. Si trata di un'opera idraulica secondaria destinata a integrare la funzione degli argini maestri, contribuendo alla difesa del territorio dalle acque in eccedenza. Esso viene generalmente costruito all'interno dei comprensori di bonifica per regolare il deflusso delle acque piovane e impedire l'allagamento delle zone agricole e dei centri abitati circostanti. La sua funzione non è soltanto protettiva, ma anche organizzativa, poiché consente una più razionale gestione delle risorse idriche e favorisce la conservazione dell'equilibrio del territorio. In tal modo, l'arginello comprensoriale rappresenta uno strumento essenziale per la tutela dell'ambiente rurale e per la sicurezza delle attività umane, specialmente nelle aree soggette a frequenti precipitazioni o a rischio idrogeologico."},
+      {id:4, title:"Ingresso in Golena", lat:44.99488, lng:10.40564, desc:"Stiamo per entrare nella Golena, ovvero la fascia di terreno pianeggiante compresa tra il Po e l'arginello comprensoriale. Essa rappresenta uno spazio naturale destinato ad accogliere temporaneamente le acque durante i periodi di piena. Dal punto di vista idraulico, la golena permette l'espansione e il contenimento delle acque, contribuendo all'equilibrio del sistema fluviale. La golena è detta aperta, quando si trova tra il fiume e i primi arginelli, oppure chiusa, quando è compresa tra i primi arginelli e l'argine maestro. Fin dall'antichità, le popolazioni insediate lungo i grandi fiumi compresero l'importance della golena, sia come elemento di protezione del territorio sia come risorsa per l'agricoltura, grazie alla fertilità dei terreni arricchiti dai sedimenti depositati dalle piene. Questo ambiente è di notevole valore naturalistico, poiché favorisce la presenza di vegetazione ripariale e di numerose specie animali legate agli ecosistemi umidi."},
+      {id:5, title:"Le Querce", lat:44.99483, lng:10.40551, desc:"Vi invitiamo ad osservare queste due bellissime querce secolari, che segnano l'ingresso in golena aperta. La quercia è uno degli alberi più importanti e rappresentativi degli ambienti golenali, e svolge una funzione fondamentale sia dal punto di vista ecologico sia paesaggistico. Essa appartiene spesso a specie adattate ai terreni umidi e fertili, ricchi di sostanze organiche depositate dalle acque del fiume. Tra le più diffuse vi sono la farnia, che notate sulla destra, conosciuta come *Quercus robur*, caratterizzata da un tronco robusto, una chioma ampia e foglie lobate di colore verde intenso. Dal punto di vista botanico, la quercia è un albero longevo: può vivere diversi secoli e raggiungere dimensioni notevoli. Il suo apparato radicale è profondo e resistente, qualità che permette di consolidare il terreno della golena e limitare l'erosione provocata dalla corrente del fiume. La corteccia, spessa e rugosa, protegge l'albero dagli sbalzi climatici e dagli agenti atmosferici."},
+      {id:6, title:"La Golena", lat:44.99461, lng:10.40535, desc:"L'ambiente golenale presenta condizioni particolari: durante alcune stagioni il terreno può risultare allagato, mentre nei periodi estivi può diventare più secco. La quercia riesce ad adattarsi a tali variazioni grazie alla sua notevole capacità di resistenza. Inoltre, essa contribuisce alla biodiversità dell'ecosistema, offrendo rifugio e nutrimento a numerose specie animali, come uccelli, insetti e piccoli mammiferi. Dal punto di vista storico e simbolico, la quercia è sempre stata considerata emblema di forza, stabilità e durata nel tempo. Nella cultura classica era associata alla solidità morale e al legame con la natura. Il percorso ora prosegue percorrendo la breve discesa e svoltando a sinistra, camminando ai piedi dell'arginello comprensoriale."},
+      {id:7, title:"La Vegetazione", lat:44.99424, lng:10.40697, desc:"Percorrendo uno dei più suggestivi sentieri golenali, si ha l'impressione di entrare in un ambiente naturale ancora legato ai ritmi lenti dell'acqua e delle stagioni. Il terreno, spesso umido e ricco di sedimenti lasciati dalle piene, favorisce la crescita di una vegetazione varia e rigogliosa, tipica degli ambienti fluviali. La vegetazione della golena cambia continuamente aspetto nel corso delle stagioni. In primavera prevalgono il verde intenso delle foglie giovani e la fioritura delle erbe spontanee; in estate la vegetazione diventa più fitta e ombrosa; in autunno il paesaggio si colora di tonalità gialle, rosse e marroni, mentre d'inverno gli alberi spogli mostrano la struttura intricata dei rami. Nelle aree di golena crescono spesso cespugli come il pruno selvatico e il biancospino, piante molto resistenti ai terreni umidi e alle variazioni del livello dell'acqua. Il pruno selvatico produce piccoli frutti scuri ed è caratterizzato da rami spinosi, mentre il biancospino si riconosce per i suoi fiori bianchi primaverili e le bacche rosse autunnali. Questi arbusti formano fitte siepi naturali che offrono riparo e nutrimento a molti uccelli e piccoli animali, contribuendo alla biodiversità dell'ambiente golenale. Camminando in questo ambiente si comprende come la vegetazione della golena non abbia soltanto un valore estetico, ma svolga anche una funzione fondamentale per l'equilibrio del fiume. Le radici trattengono il terreno, limitano l'erosione e contribuiscono a mantenere stabile l'ecosistema fluviale. La golena appare così come un luogo in cui acqua, terra e vegetazione convivono in un equilibrio naturale delicato ma essenziale."},
+      {id:8, title:"Il Pioppeto", lat:44.99224, lng:10.40936, desc:"Potete ammirare ora sulla vostra sinistra un pioppeto piantumato. La coltivazione dei pioppi nelle zone golenali è una pratica molto diffusa grazie alla particolare fertilità dei terreni vicini ai fiumi. Prima della messa a dimora delle piante, il terreno viene preparato con lavorazioni che favoriscono il drenaggio e la crescita delle radici. I pioppi vengono generalmente piantati attraverso talee o giovani piantine disposte in filari regolari, così da facilitare la crescita e le operazioni di manutenzione. La distanza tra gli alberi è studiata per garantire sia un corretto sviluppo delle chiome ma soprattutto per permettere il passaggio dei mezzi agricoli. Durante la crescita delle pioppete infatti sono necessarie cure costanti, come irrigazione nei periodi più secchi, controllo delle erbe infestanti e trattamenti contro parassiti e malattie. Dopo circa dieci o quindici anni, gli alberi raggiungono dimensioni sufficienti per il taglio e la raccolta del legno. Dal punto di vista economico, il pioppo rappresenta una risorsa importante perché il suo legno è leggero, versatile e facilmente lavorabile. Viene utilizzato soprattutto per la produzione di compensato, carta, cassette per la frutta, mobili e imballaggi industriali. La coltivazione intensiva dei pioppi nelle aree golenali ha quindi favorito lo sviluppo di attività produttive legate all'industria del legno, creando una fonte di reddito per molte aziende agricole e forestali."},
+      {id:9, title:"Pioppi Selvatici", lat:44.98974, lng:10.40753, desc:"Vi trovate ora sulla via che attraversa l'area golenale, e prosegue verso nord ovest costeggiando a breve distanza il corso del fiume Po. A differenza del pioppo piantumato potete osservare attorno a voi quello a crescita spontanea. Si tratta di un albero elegante e slanciato, capace di raggiungere notevoli altezze grazie all'abbondanza d'acqua e alla fertilità del terreno. Il suo fusto è generalmente diritto e robusto, con una forma verticale che permette alla pianta di svilupparsi rapidamente verso la luce. Nei pioppi più giovani la corteccia prima appare liscia e chiara, di colore grigio-biancastro, mentre negli esemplari più maturi diventa più scura, rugosa e segnata da profonde fenditure. Il fogliame è leggero e fitto, di un colore verde brillante sulla superficie superiore, più chiaro nella parte inferiore. Durante le giornate ventose le foglie si muovono continuamente, producendo un caratteristico tremolio e un fruscio delicato che rende il pioppo facilmente riconoscibile. Nel periodo autunnale il fogliame assume tonalità giallo-dorate, contribuendo a creare il tipico paesaggio delle aree fluviali. Grazie alla sua imponenza e alla rapidità della crescita, il pioppo rappresenta uno degli alberi più simbolici e diffusi degli ambienti golenali."},
+      {id:10, title:"Gli Olmi", lat:44.98981, lng:10.40711, desc:"Anche l'olmo è una pianta tipica degli ambienti golenali, apprezzata per la sua imponenza e la capacità di adattarsi ai terreni fertili vicini ai corsi d'acqua. Il suo fusto è solido e robusto, spesso molto alto, con una chioma ampia e arrotondata che offre ombra e riparo a numerose specie animali. La corteccia dell'olmo, liscia negli alberi giovani, con il passare degli anni diventa spessa, scura e profondamente solcata da fenditure verticali. Questo aspetto rugoso conferisce alla pianta un carattere maestoso e antico. Le radici sono forti e ben sviluppate, adatte a stabilizzare il terreno delle zone golenali soggette alle piene dei fiumi. Il fogliame è fitto e compatto: le foglie, di colore verde intenso hanno una superficie leggermente ruvida al tatto. In autunno assumono tonalità giallastre prima di cadere. La chioma dell'olmo crea ambienti freschi e ombrosi, importanti per l'equilibrio dell'ecosistema fluviale. Negli ultimi decenni, però, molti olmi sono stati colpiti dalla grafiosi, una grave malattia causata da un fungo trasportato da insetti parassiti chiamati scolitidi. Questa infezione ostruisce i vasi interni della pianta, impedendo il passaggio della linfa e provocando il progressivo disseccamento dei rami fino, spesso, alla morte dell'albero. La diffusione della grafiosi ha ridotto notevolmente la presenza dell'olmo in molte aree europee."},
+      {id:11, title:"I Salici", lat:44.99011, lng:10.40419, desc:"Anche il salice è un tipico arbusto della zona. Nello specifico è possibile incontrarne di due tipi. Il salice piangente è un albero ornamentale facilmente riconoscibile per i suoi lunghi rami sottili e pendenti, che ricadono verso il basso fino a sfiorare il terreno o l'acqua. Può raggiungere dimensioni notevoli. Le sue foglie sono strette e allungate, di colore verde chiaro, e contribuiscono a rendere elegante la sua forma elegante. Il salice da fiume, invece, ha una struttura meno ornamentale e più resistente, con rami flessibili capaci di sopportare le piene e la forza dell'acqua. Le sue radici contribuiscono a consolidare il terreno e a limitare l'erosione delle sponde. Questo tipo di salice cresce spesso in gruppi lungo i corsi d'acqua e svolge un'importante funzione ecologica, offrendo riparo a numerose specie animali."},
+      {id:12, title:"La Lanca", lat:44.99030, lng:10.40352, desc:"Durante il percorso, prima di arrivare al ponticello avete sicuramente notato un torretta di avvistamento attualmente chiusa al pubblico. Da li è possibile osservare una lanca tipico elemento paesaggistico delle golene. Nello specifico questa ha una formazione particolare, essendo ciò che rimane di cava utilizzata per l'estrazione dell'argilla, in funzione fino alla fine degli anni sessanta. In realtà nelle zone golenali le lanche derivano dall'evoluzione naturale dei meandri, cioè delle grandi curve del fiume che in pianura cambia spesso il suo corso a causa di erosione, trasporto e sedimentazione. Quando c'è molta acqua soprattutto durante le piene, il fiume può modificare il proprio tracciato. Nel corso del tempo la corrente erode la parte esterna del meandro, dove l'acqua scorre più velocemente, mentre nella parte interna deposita sabbia e sedimenti. In questo modo la curva diventa sempre più stretta. Durante una piena il fiume può aprirsi un percorso più directo, tagliando il tratto di terra che separa due anse vicine. Il vecchio meandro viene quindi abbandonato dal corso principale del fiume e rimane isolato. Nasce così la lanca, uno specchio d'acqua fermo, spesso a forma di ferro di cavallo. I bodri invece sono piccoli specchi d'acqua tipici delle zone golenali e delle pianure attraversate dai fiumi. Si formano in depressioni del terreno dove l'acqua ristagna o riaffiora dal sottosuolo, creando ambienti umidi ricchi di vegetazione acquatica. Attorno ai bodri crescono spesso canneti, salici e altre piante adatte ai terreni molto umidi. Sia le lanche che i bodri sono ambienti che hanno una grande importanza ecologica perché offrono rifugio e nutrimento a numerose specie di anfibi, insetti, uccelli e piccoli animali e rappresentano quindi ecosistemi delicati e preziosi, fondamentali per la biodiversità delle aree fluviali e golenali."},
+      {id:13, title:"La Lanca - Pt. 2", lat:44.99039, lng:10.40339, desc:"Le lanche fluviali rappresentano ambienti di grande importanza per la fauna ittica, poiché le loro acque calme e ricche di vegetazione offrono condizioni ideali per la vita e la riproduzione di numerose specie di pesci. Si trovano la carpa e la tinca, pesci resistenti che prediligono acque lente e ricche di sostanze nutritive. Sono presenti anche il luccio, importante predatore degli ambienti fluviali, il persico reale e il pesce gatto. In alcune lanche vivono inoltre anguille e piccoli ciprinidi, che trovano rifugio tra le canne e la vegetazione acquatica. La vegetazione sommersa e i canneti svolgono una funzione fondamentale, poiché offrono protezione agli avannotti e favoriscono la deposizione delle uova. Le lanche costituiscono quindi vere e proprie aree di riproduzione e crescita per molte specie ittiche, contribuendo alla biodiversità dell'ecosistema fluviale. Tuttavia questi ambienti sono molto delicati e minacciati dall'inquinamento delle acque, dalla riduzione delle zone umide e dall'introduzione di specie invasive. Anche gli interventi artificiali sul corso dei fiumi possono alterare l'equilibrio naturale delle lanche, mettendo a rischio la sopravvivenza della fauna ittica che vi abita. Ci spostiamo di nuovo sulla strada e risalendo verso sinistra imbocchiamo il sentiero indicato che ci riporterà al punto di partenza."},
+      {id:14, title:"La Fauna Golenale", lat:44.99014, lng:10.40456, desc:"Durante il tragitto è possibile imbattersi nella fauna golenale molto ricca e diversificata, In questi ambienti vivono numerose specie di uccelli, alcune strettamente legate all'acqua, altre tipiche dei boschi golenali e dei campi coltivati circostanti. La grande varietà di habitat rende il medio corso del Po un ecosistema di straordinaria importanza naturalistica, tanto che il 19 giugno 2019 questo territory è stato riconosciuto come Riserva della Biosfera UNESCO MaB – Po Grande. Tra gli uccelli acquatici più diffusi vi è il germano reale, oggi però minacciato dal fenomeno dell'ibridazione con esemplari allevati dall'uomo. L'incrocio tra individui selvatici e domestici altera progressivamente il patrimonio genetico originario della specie, compromettendone la purezza in modo irreversibile. Anche la presenza dei gabbiani è aumentata notevolmente negli ultimi anni nella Pianura Padana. Questo fenomeno è favorito soprattutto dalla grande quantità di rifiuti prodotti dall'uomo, che offre a questi uccelli abbondanti fonti di cibo. La crescita incontrollata della popolazione dei gabbiani ha però causato squilibri nell'ecosistema, contribuendo alla diminuzione di altre specie più fragili."},
+      {id:15, title:"La Fauna Golenale - Pt. 2", lat:44.99012, lng:10.40630, desc:"Nei boschi golenali trovano rifugio e luoghi adatti alla nidificazione molte specie di piccoli uccelli e rapaci. Tuttavia, anche questi ambienti sono oggi minacciati dalle attività umane. I passeri, ad esempio, hanno subito una drastica diminuzione, stimata intorno al sessanta per cento, principalmente a causa dell'inquinamento, dell'agricoltura intensiva e della presenza di numerosi predatori. Ancora più delicata è la situazione dei rapaci notturni, come civette e allocchi, la cui sopravvivenza è ostacolata dalla progressiva scomparsa degli alberi cavi necessari alla nidificazione e dall'avvelenamento provocato dai pesticidi utilizzati nelle coltivazioni."},
+      {id:16, title:"La Fauna Golenale - Pt. 3", lat:44.99225, lng:10.40757, desc:"La presenza di boschi, corsi d'acqua, radure e vegetazione fitta offre condizioni favorevoli per la vita di molti mammiferi, che trovano nelle golene rifugio, acqua e abbondanza di cibo. Tra gli animali più diffusi vi sono i cinghiali, particolarmente adatti agli ambienti umidi e boscati. Questi animali scavano il terreno alla ricerca di radici, ghiande e piccoli organismi, contribuendo a modificare il sottobosco. In queste aree vivono anche i caprioli, animali eleganti e molto schivi, che frequentano soprattutto le aree più tranquille dei boschi golenali e i margini dei campi coltivati. Nelle radure e nei prati vicini al fiume è frequente osservare le lepri, riconoscibili per le lunghe orecchie e la grande velocità nella corsa. Le lepri si nutrono principalmente di erbe e giovani germogli e rappresentano una presenza tipica degli ambienti fluviali e agricoli della Pianura Padana. Tra i predatori più comuni della golena vi è invece la volpe, animale molto intelligente e adattabile. La volpe vive sia nei boschi sia nelle aree aperte e si alimenta di piccoli mammiferi, insetti, uccelli e frutti. Grazie alla sua capacità di adattamento riesce a sopravvivere anche in ambienti modificati dall'uomo."},
+      {id:17, title:"L' Area Golenale", lat:44.99277, lng:10.40601, desc:"Lungo le rive del fiume è inoltre diffusa la nutria, roditore originario del Sud America introdotto artificialmente nel secolo scolto. Questo animale si è rapidamente diffuso nelle zone umide italiane, causando però danni agli argini fluviali a causa delle gallerie che scava nel terreno. La fauna di grandi taglie delle golene rappresenta dunque un elemento fondamentale dell'ecosistema fluviale. Tuttavia, l'espansione urbana, l'inquinamento e la riduzione degli spazi naturali minacciano sempre più questi ambienti, rendendo necessaria una maggiore tutela della biodiversità delle aree golenali. L'ambiente golenale appare quindi come un ecosistema prezioso ma fragile, in cui la conservazione della biodiversità dipende sempre più dalla capacità dell'uomo di proteggere e rispettare gli equilibri naturali del territorio fluviale."},
+      {id:18, title:"The End", lat:44.99436, lng:10.40529, desc:"La visita alla golena del Po permette di comprendere quanto questo ambiente sia ricco, complesso e delicato. Attraverso l'osservazione della vegetazione, delle lanche, dei boschi golenali e delle numerose specie animali che popolano il territorio, emerge il profondo legame tra il fiume e l'ecosistema che vi si sviluppa intorno. La golena non rappresenta soltanto uno spazio naturale di grande valore paesaggistico, ma anche un luogo fondamentale per la conservazione della biodiversità e per l'equilibrio ambientale della Pianura Padana. Tuttavia, questo patrimonio naturale è oggi minacciato dall'inquinamento, dall'espansione delle attività umane e dai cambiamenti climatici. Per questo motivo è necessario promuovere una maggiore tutela del territorio fluviale, affinché le future generazioni possano continuare a conoscere e apprezzare la straordinaria ricchezza ambientale del Po. La golena insegna infatti come uomo e natura siano profondamente legati e come il rispetto degli equilibri naturali sia indispensabile per la salvaguardia dell'ambiente."}
+    ];
+
+    // Marker tappe → redirect a mappa.html
+    tappe.forEach((tappa) => {
+      const customIcon = L.divIcon({
+        className: 'custom-marker-icon',
+        html: `<div>${tappa.id}</div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+      L.marker([tappa.lat, tappa.lng], { icon: customIcon })
+        .addTo(map)
+        .on('click', function(e) {
+          L.DomEvent.stopPropagation(e);
+          window.location.href = `mappa.html?tappa=${tappa.id}`;
+        });
+    });
+
+    // Bottone mappa
+    document.getElementById('fullscreenBtn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      window.location.href = 'mappa.html';
+    });
+
+    // Carosello
+    const track = document.getElementById('carouselTrack');
+    const dots  = document.querySelectorAll('.dots-container .dot');
+    const totalSlides  = 10;
+    const slidesPerDot = totalSlides / dots.length;
+    let currentIndex = 0;
+
+    function updateCarousel() {
+      track.style.transform = `translateX(-${currentIndex * 100}%)`;
+      const activeDotIndex = Math.floor(currentIndex / slidesPerDot);
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === activeDotIndex));
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % totalSlides;
+      updateCarousel();
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+      updateCarousel();
+    });
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        currentIndex = Math.min(totalSlides - 1, Math.round(i * slidesPerDot));
+        updateCarousel();
+      });
+    });
+    updateCarousel();
+
+    // Bottoni navigazione
+    const feedbackBtnEl = document.getElementById('feedbackBtn');
+    const scannerBtnEl  = document.getElementById('scannerBtn');
+    if (feedbackBtnEl) feedbackBtnEl.addEventListener('click', () => { window.location.href = 'segnala.html'; });
+    if (scannerBtnEl)  scannerBtnEl.addEventListener('click',  () => { window.location.href = 'scanner.html'; });
+  </script>
+</body>
+</html>
