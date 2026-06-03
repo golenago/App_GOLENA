@@ -40,13 +40,41 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #F2F2F7;
+      background: linear-gradient(180deg, rgba(242, 242, 247, 1) 70%, rgba(242, 242, 247, 0) 100%);
+      padding: 14px 0 14px;
+    }
+
+    .title-row-fade {
+      height: 52px;
+      width: 100%;
+      background: linear-gradient(180deg, rgba(242, 242, 247, 1) 0%, rgba(242, 242, 247, 0) 100%);
+      pointer-events: none;
+      margin-bottom: 4px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease;
+    }
+
+    .title-row-fade.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .title-row.scrolled {
+      background: #F2F2F7;
+      background: linear-gradient(180deg, rgba(242, 242, 247, 1) 25%, rgba(242, 242, 247, 0) 100%);
     }
 
     .title{
       font-size: clamp(28px, 5vw, 38px);
       font-weight:600;
       line-height:1.05;
-      margin: 0;
+      margin: 0 6px;
       padding: 0;
     }
 
@@ -635,9 +663,9 @@
 
   <div class="phone">
     <div class="title-row">
-      <div class="title" style="font-weight: 600;">Go</div>
-      <div class="title" style="font-weight: 300;">lena</div>
-      <div class="title" style="font-weight: 600;">Go</div>
+      <div class="title" style="font-weight: 600; margin:0px;">Go</div>
+      <div class="title" style="font-weight: 300; margin:0px;">lena</div>
+      <div class="title" style="font-weight: 600; margin:0px;">Go</div>
     </div>
 
       <div class="hero1">
@@ -751,7 +779,9 @@
         </div>
       </div>
       <p class="partners-note" style="font-size: 10px; text-align: center"><i>Audio e testi: 1° - 2° Liceo Classico</i></p>
-      <p class="partners-note" style="margin: 0px; font-size: 10px; text-align: center;"><i>A CREATION BY: © Lorenzo e Jacopo Goffredi - 06.2026</i></p>
+      <p class="partners-note" style="margin: 0px; font-size: 10px; text-align: center;"><i>Foto a cura del corso fotografico della scuola</i></p>
+      <p class="partners-note" style="margin: 0px; font-size: 10px; text-align: center;"><i>A CREATION BY: © Lorenzo e Jacopo Goffredi -<br>in collaboration con 4c itis</i></p>
+
     </div>
     
 
@@ -866,6 +896,17 @@
     const scannerBtnEl  = document.getElementById('scannerBtn');
     if (feedbackBtnEl) feedbackBtnEl.addEventListener('click', () => { window.location.href = 'segnala.html'; });
     if (scannerBtnEl)  scannerBtnEl.addEventListener('click',  () => { window.location.href = 'scanner.html'; });
+
+    const titleRow = document.querySelector('.title-row');
+    const titleRowFade = document.querySelector('.title-row-fade');
+    function updateTitleRowOpacity() {
+      const isScrolled = window.scrollY > 10;
+      if (titleRow) titleRow.classList.toggle('scrolled', isScrolled);
+      if (titleRowFade) titleRowFade.classList.toggle('visible', isScrolled);
+    }
+
+    window.addEventListener('scroll', updateTitleRowOpacity, { passive: true });
+    updateTitleRowOpacity();
   </script>
 </body>
 </html>
